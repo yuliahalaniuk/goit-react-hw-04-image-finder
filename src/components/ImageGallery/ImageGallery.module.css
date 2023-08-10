@@ -1,0 +1,31 @@
+.imgList {
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(1, minmax(200px, 1fr));
+  grid-gap: 20px;
+
+  margin-top: 0;
+  margin-bottom: 40px;
+  padding: 0;
+  list-style: none;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media screen and (min-width: 375px) {
+  .imgList {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (min-width: 768px) {
+  .imgList {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media screen and (min-width: 1120px) {
+  .imgList {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
