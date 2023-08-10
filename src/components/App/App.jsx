@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import Searchbar from 'components/Searchbar/Searchbar';
 import ImageGallery from 'components/ImageGallery/ImageGallery';
@@ -17,104 +17,109 @@ const STATUS = {
   RESOLVED: 'resolved',
 };
 
-class App extends Component {
-  state = {
-    searchQuery: '',
-    foundResults: [],
-    status: STATUS.IDLE,
-    page: 1,
-    isLoading: false,
+const App = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [foundResults, setFoundResults] = useState([]);
+  const [page, setPage] = useState(1);
+  const [isLoading, setLoading] = useState(false);
+  const [status, setStatus] = useState(STATUS.IDLE);
+
+  const total = useRef(0);
+
+  const handleSearchSubmit = query => {
+    setSearchQuery(query);
+    setPage(1);
   };
 
-  totalHits = 0;
-
-  handleSearchSubmit = query => {
-    this.setState({ searchQuery: query, page: 1 });
+  const onLoadMoreBtnClick = e => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  onLoadMoreBtnClick = e => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
-  };
+  useEffect(() => {
+    if (searchQuery === '') {
+      return;
+    }
 
-  getImages = async neededQuery => {
-    try {
-      this.setState({ isLoading: true });
-      await fetchImages(this.state.page, neededQuery).then(
-        ({ hits, totalHits }) => {
-          this.totalHits = totalHits;
+    const getIm = async neededQuery => {
+      try {
+        setLoading(true);
+        fetchImages(page, neededQuery).then(({ hits, totalHits }) => {
+          total.current = totalHits;
 
           if (hits.length === 0) {
-            this.setState({ status: STATUS.REJECTED_NOT_FOUND });
+            setStatus(STATUS.REJECTED_NOT_FOUND);
             return;
           }
 
-          this.setState(prevState => ({
-            foundResults: prevState.foundResults
-              ? [...prevState.foundResults, ...hits]
-              : hits,
-            status: STATUS.RESOLVED,
-          }));
-        }
-      );
-    } catch (error) {
-      this.setState({ status: STATUS.REJECTED_FAILED });
-    } finally {
-      this.setState({ isLoading: false });
-    }
-  };
+          setFoundResults(prevResults =>
+            prevResults ? [...prevResults, ...hits] : hits
+          );
+          setStatus(STATUS.RESOLVED);
+        });
+      } catch (error) {
+        setStatus(STATUS.REJECTED_FAILED);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.searchQuery !== this.state.searchQuery) {
-      this.setState({ status: STATUS.PENDING, foundResults: [] });
-      this.getImages(this.state.searchQuery);
-    } else if (prevState.page !== this.state.page) {
-      this.getImages(this.state.searchQuery);
-    }
-  }
+    setStatus(STATUS.PENDING);
+    setFoundResults([]);
 
-  render() {
-    const { handleSearchSubmit, onLoadMoreBtnClick, totalHits } = this;
-    const { searchQuery, status, foundResults, isLoading } = this.state;
+    getIm(searchQuery);
+  }, [searchQuery, page]);
 
-    const shouldRenderLoadMoreButton = foundResults.length < totalHits;
+  // useEffect(() => {
+  //   getImages(searchQuery);
+  // }, [getImages, page, searchQuery]);
 
-    return (
-      <>
-        <Searchbar onSubmit={handleSearchSubmit} />
-        <div className={css.ImageListContainer}>
-          {status === STATUS.IDLE && (
-            <Warning message="Please enter you request" />
-          )}
+  // componentDidUpdate(prevProps, prevState) {
+  //   if (prevState.searchQuery !== this.state.searchQuery) {
+  //     this.setState({ status: STATUS.PENDING, foundResults: [] });
+  //     this.getImages(this.state.searchQuery);
+  //   } else if (prevState.page !== this.state.page) {
+  //     this.getImages(this.state.searchQuery);
+  //   }
+  // }
 
-          {status === STATUS.PENDING && <Loader />}
+  const shouldRenderLoadMoreButton = foundResults.length < total.current;
 
-          {status === STATUS.REJECTED_FAILED && (
-            <Warning message="Opps... Something went wrong" />
-          )}
+  return (
+    <>
+      <Searchbar onSubmit={handleSearchSubmit} />
+      <div className={css.ImageListContainer}>
+        {status === STATUS.IDLE && (
+          <Warning message="Please enter you request" />
+        )}
 
-          {status === STATUS.REJECTED_NOT_FOUND && (
-            <Warning
-              message={`Sorry, nothing found for ${searchQuery}. Please try again`}
-            />
-          )}
+        {status === STATUS.PENDING && <Loader />}
 
-          {status === STATUS.RESOLVED && (
-            <>
-              <ImageGallery foundResults={foundResults} />
+        {status === STATUS.REJECTED_FAILED && (
+          <Warning message="Opps... Something went wrong" />
+        )}
 
-              {isLoading ? (
-                <Loader />
-              ) : shouldRenderLoadMoreButton ? (
-                <Button handleLoadMore={onLoadMoreBtnClick} />
-              ) : (
-                <Warning message=" You've reached the end of the results" />
-              )}
-            </>
-          )}
-        </div>
-      </>
-    );
-  }
-}
+        {status === STATUS.REJECTED_NOT_FOUND && (
+          <Warning
+            message={`Sorry, nothing found for ${searchQuery}. Please try again`}
+          />
+        )}
+
+        {status === STATUS.RESOLVED && (
+          <>
+            <ImageGallery foundResults={foundResults} />
+
+            {isLoading ? (
+              <Loader />
+            ) : shouldRenderLoadMoreButton ? (
+              <Button handleLoadMore={onLoadMoreBtnClick} />
+            ) : (
+              <Warning message=" You've reached the end of the results" />
+            )}
+          </>
+        )}
+      </div>
+    </>
+  );
+};
 
 export default App;

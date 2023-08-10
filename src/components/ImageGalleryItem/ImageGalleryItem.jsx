@@ -9,16 +9,14 @@ const ImageGalleryItem = ({
   largeImageURL,
 }) => {
   return (
-    <>
-      <li
-        className={css.imgListItem}
-        onClick={() => {
-          onImgClick(largeImageURL);
-        }}
-      >
-        <img src={webformatURL} className={css.imgListPic} alt={tags} />
-      </li>
-    </>
+    <li
+      className={css.imgListItem}
+      onClick={() => {
+        onImgClick(largeImageURL);
+      }}
+    >
+      <img src={webformatURL} className={css.imgListPic} alt={tags} />
+    </li>
   );
 };
 

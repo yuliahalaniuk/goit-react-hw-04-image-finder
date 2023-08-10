@@ -1,51 +1,44 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import css from './ImageGallery.module.css';
 import PropTypes from 'prop-types';
 
 import ImageGalleryItem from '../ImageGalleryItem/ImageGalleryItem';
 import Modal from '../Modal/Modal';
 
-class ImageGallery extends Component {
-  state = {
-    modalOpen: false,
-    largeImageURL: '',
+const ImageGallery = ({ foundResults }) => {
+  const [modalOpen, setModalToggle] = useState(false);
+  const [largeImageURL, setLargeImageURL] = useState('');
+
+  const onImgClick = largeImageURL => {
+    setLargeImageURL(largeImageURL);
+    setModalToggle(prevState => !prevState);
   };
 
-  modalToggle = () => {
-    this.setState(prevState => ({
-      modalOpen: !prevState.modalOpen,
-    }));
-  };
+  return (
+    <>
+      <ul className={css.imgList}>
+        {foundResults.map(({ id, webformatURL, tags, largeImageURL }) => (
+          <ImageGalleryItem
+            key={id}
+            onImgClick={onImgClick}
+            webformatURL={webformatURL}
+            tags={tags}
+            largeImageURL={largeImageURL}
+          />
+        ))}
+      </ul>
 
-  onImgClick = largeImageURL => {
-    this.setState({ largeImageURL });
-    this.modalToggle();
-  };
-
-  render() {
-    const { modalOpen, largeImageURL } = this.state;
-    const { foundResults } = this.props;
-    const { onImgClick, modalToggle } = this;
-
-    return (
-      <>
-        <ul className={css.imgList}>
-          {foundResults.map(({ id, webformatURL, tags, largeImageURL }) => (
-            <ImageGalleryItem
-              key={id}
-              onImgClick={onImgClick}
-              webformatURL={webformatURL}
-              tags={tags}
-              largeImageURL={largeImageURL}
-            />
-          ))}
-        </ul>
-
-        {modalOpen && <Modal imgUrl={largeImageURL} onClose={modalToggle} />}
-      </>
-    );
-  }
-}
+      {modalOpen && (
+        <Modal
+          imgUrl={largeImageURL}
+          onClose={() => {
+            setModalToggle(prevState => !prevState);
+          }}
+        />
+      )}
+    </>
+  );
+};
 
 ImageGallery.propTypes = {
   foundResults: PropTypes.array.isRequired,
