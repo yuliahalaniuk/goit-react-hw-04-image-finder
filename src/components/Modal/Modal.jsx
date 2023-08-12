@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import css from './Modal.module.css';
 import { createPortal } from 'react-dom';
@@ -12,21 +12,21 @@ const Modal = ({ imgUrl, onClose }) => {
     }
   };
 
-  // const handleKeyDown = e => {
-  //   if (e.code === 'Escape') {
-  //     onClose();
-  //   }
-  // };
+  useEffect(() => {
+    const handleKeyDown = e => {
+      if (e.code === 'Escape') {
+        onClose();
+      }
+    };
 
-  // componentDidMount() {
-  //   window.addEventListener('keydown', this.handleKeyDown);
-  //   document.body.style.overflow = 'hidden';
-  // }
+    window.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
 
-  // componentWillUnmount() {
-  //   window.removeEventListener('keydown', this.handleKeyDown);
-  //   document.body.style.overflow = 'auto';
-  // }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'auto';
+    };
+  }, [onClose]);
 
   return createPortal(
     <div className={css.modalBackdrop} onClick={hadleBackdropClick}>

@@ -40,47 +40,42 @@ const App = () => {
       return;
     }
 
-    const getIm = async neededQuery => {
-      try {
-        setLoading(true);
-        fetchImages(page, neededQuery).then(({ hits, totalHits }) => {
-          total.current = totalHits;
-
-          if (hits.length === 0) {
-            setStatus(STATUS.REJECTED_NOT_FOUND);
-            return;
-          }
-
-          setFoundResults(prevResults =>
-            prevResults ? [...prevResults, ...hits] : hits
-          );
-          setStatus(STATUS.RESOLVED);
-        });
-      } catch (error) {
-        setStatus(STATUS.REJECTED_FAILED);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    setStatus(STATUS.PENDING);
     setFoundResults([]);
+    setStatus(STATUS.PENDING);
 
-    getIm(searchQuery);
-  }, [searchQuery, page]);
+    try {
+      fetchImages(searchQuery).then(({ hits, totalHits }) => {
+        total.current = totalHits;
+        if (hits.length === 0) {
+          setStatus(STATUS.REJECTED_NOT_FOUND);
+          return;
+        }
 
-  // useEffect(() => {
-  //   getImages(searchQuery);
-  // }, [getImages, page, searchQuery]);
+        setFoundResults(hits);
+        setStatus(STATUS.RESOLVED);
+      });
+    } catch (error) {
+      setStatus(STATUS.REJECTED_FAILED);
+    }
+  }, [searchQuery]);
 
-  // componentDidUpdate(prevProps, prevState) {
-  //   if (prevState.searchQuery !== this.state.searchQuery) {
-  //     this.setState({ status: STATUS.PENDING, foundResults: [] });
-  //     this.getImages(this.state.searchQuery);
-  //   } else if (prevState.page !== this.state.page) {
-  //     this.getImages(this.state.searchQuery);
-  //   }
-  // }
+  useEffect(() => {
+    if (searchQuery === '' || page === 1) return;
+
+    try {
+      setLoading(true);
+      fetchImages(searchQuery, page).then(({ hits }) => {
+        setFoundResults(prevResults =>
+          prevResults ? [...prevResults, ...hits] : hits
+        );
+        setLoading(false);
+        setStatus(STATUS.RESOLVED);
+      });
+    } catch {
+      setLoading(false);
+      setStatus(STATUS.REJECTED_FAILED);
+    }
+  }, [page, searchQuery]);
 
   const shouldRenderLoadMoreButton = foundResults.length < total.current;
 
